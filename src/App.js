@@ -11,7 +11,7 @@ function App() {
 
       <div className="dataContainer">
         <div className="header">
-          Me manda um anime. 📺
+          Me manda um olá 🖐
         </div>
 
         <div className="bio">
