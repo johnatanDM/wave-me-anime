@@ -8,8 +8,11 @@ function App() {
   const [currentAccount, setCurrentAccount] = useState("");
   const [mining, setMining] = useState("");
   const [countWave, setCountWave] = useState(0);
+  const [message, setMessage] = useState("");
 
-  const contractAddress = "0x3cA14E2a908fFD32Be7bb9eC94186d04Ea317028";
+  const [allWaves, setAllWaves] = useState([]);
+
+  const contractAddress = "0xC1fE135AfB7e1317fE43aD3Bdb31Db07d183C245";
   const contractABI = abi.abi;
 
   const { ethereum } = window;
@@ -17,10 +20,46 @@ function App() {
   const signer = provider.getSigner();
   const wavePortalContract = new ethers.Contract(contractAddress, contractABI, signer);
 
+  const getAllWaves = async () => {
+    try {
+      const { ethereum } = window;
+      if (ethereum) {
+
+        /*
+         * Call the getAllWaves method from your Smart Contract
+         */
+        const waves = await wavePortalContract.getAllWaves();
+        
+
+        /*
+         * We only need address, timestamp, and message in our UI so let's
+         * pick those out
+         */
+        let wavesCleaned = [];
+        waves.forEach(wave => {
+          wavesCleaned.push({
+            address: wave.waver,
+            timestamp: new Date(wave.timestamp * 1000),
+            message: wave.message
+          });
+        });
+
+        /*
+         * Store our data in React State
+         */
+        setAllWaves(wavesCleaned);
+      } else {
+        console.log("Ethereum object doesn't exist!")
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   const wave = async () => {
     try {
       if (ethereum) {
-        const waveTxn = await wavePortalContract.wave();
+        const waveTxn = await wavePortalContract.wave(message);
         console.log("Mining...", waveTxn.hash);
         setMining(true);
         await waveTxn.wait();
@@ -34,6 +73,11 @@ function App() {
     } catch (error) {
       console.log(error)
     }
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    setMessage("");
   }
   
   const updateCountWave = async () => {
@@ -50,6 +94,7 @@ function App() {
         console.log("Make sure you have metamask!");
         return;
       } else {
+        getAllWaves();
         console.log("We have the ethereum object", ethereum);
       }
       
@@ -94,7 +139,7 @@ function App() {
   useEffect(() => {
     checkIfWalletIsConnected();
     updateCountWave();
-  })
+  }, [])
 
   return (
     <div className="mainContainer">
@@ -110,9 +155,6 @@ function App() {
           <p>💰 Você poderá ganhar algum ETH. 💲</p>
         </div>
 
-        <button className="waveButton" onClick={wave}>
-          Enviar
-        </button>
         <div className="contador">
           <p>Já foram enviados {countWave} 🖐</p>
         </div>
@@ -123,12 +165,34 @@ function App() {
 
         {/*
         * If there is no currentAccount render this button
-        */}
+      */}
         {!currentAccount && (
           <button className="waveButton" onClick={connectWallet}>
-            Conectar carteira.
+              Conectar carteira.
           </button>
         )}
+
+        {currentAccount && (
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text" 
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <button type="submit" className="waveButton" onClick={wave}>
+              Enviar
+            </button>
+          </form>
+        )}
+
+        {allWaves.map((wave, index) => {
+          return (
+            <div key={index} style={{ backgroundColor: "OldLace", marginTop: "16px", padding: "8px" }}>
+              <div>Address: {wave.address}</div>
+              <div>Time: {wave.timestamp.toString()}</div>
+              <div>Message: {wave.message}</div>
+            </div>)
+        })}
 
       </div>
     </div>
