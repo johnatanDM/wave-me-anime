@@ -12,7 +12,7 @@ function App() {
 
   const [allWaves, setAllWaves] = useState([]);
 
-  const contractAddress = "0xC1fE135AfB7e1317fE43aD3Bdb31Db07d183C245";
+  const contractAddress = "0x86fE667CEdc7758a6849cCe6aCd27f2C31A9a5C8";
   const contractABI = abi.abi;
 
   const { ethereum } = window;
@@ -59,7 +59,7 @@ function App() {
   const wave = async () => {
     try {
       if (ethereum) {
-        const waveTxn = await wavePortalContract.wave(message);
+        const waveTxn = await wavePortalContract.wave(message, { gasLimit: 300000 });
         console.log("Mining...", waveTxn.hash);
         setMining(true);
         await waveTxn.wait();
