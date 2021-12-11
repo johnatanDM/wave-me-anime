@@ -2,28 +2,31 @@ import React, { useEffect, useState  } from "react";
 import { ethers } from "ethers";
 import './App.css';
 import abi from './utils/WavePortal.json';
+import load from './assets/load.gif'
 
 function App() {
   const [currentAccount, setCurrentAccount] = useState("");
+  const [mining, setMining] = useState("");
+  const [countWave, setCountWave] = useState(0);
+
   const contractAddress = "0x3cA14E2a908fFD32Be7bb9eC94186d04Ea317028";
   const contractABI = abi.abi;
+
+  const { ethereum } = window;
+  const provider = new ethers.providers.Web3Provider(ethereum);
+  const signer = provider.getSigner();
+  const wavePortalContract = new ethers.Contract(contractAddress, contractABI, signer);
+
   const wave = async () => {
     try {
-      const { ethereum } = window;
-
       if (ethereum) {
-        const provider = new ethers.providers.Web3Provider(ethereum);
-        const signer = provider.getSigner();
-        const wavePortalContract = new ethers.Contract(contractAddress, contractABI, signer);
-
         const waveTxn = await wavePortalContract.wave();
         console.log("Mining...", waveTxn.hash);
-
+        setMining(true);
         await waveTxn.wait();
         console.log("Mined -- ", waveTxn.hash);
-
-        let count = await wavePortalContract.getTotalWaves();
-        console.log("Retrieved total wave count...", count.toNumber());
+        setMining(false);
+        updateCountWave();
 
       } else {
         console.log("Ethereum object doesn't exist!");
@@ -33,6 +36,12 @@ function App() {
     }
   }
   
+  const updateCountWave = async () => {
+    let count = await wavePortalContract.getTotalWaves();
+    setCountWave(count.toNumber());
+    console.log("Retrieved total wave count...", count.toNumber());
+  }
+
   const checkIfWalletIsConnected = async () => {
     try {
       const { ethereum } = window;
@@ -84,7 +93,8 @@ function App() {
     */
   useEffect(() => {
     checkIfWalletIsConnected();
-  }, [])
+    updateCountWave();
+  })
 
   return (
     <div className="mainContainer">
@@ -101,15 +111,22 @@ function App() {
         </div>
 
         <button className="waveButton" onClick={wave}>
-          Me conta ai
+          Enviar
         </button>
+        <div className="contador">
+          <p>Já foram enviados {countWave} 🖐</p>
+        </div>
+        
+        {mining && (
+          <img src={load} alt="loading..." />
+        )}
 
         {/*
         * If there is no currentAccount render this button
         */}
         {!currentAccount && (
           <button className="waveButton" onClick={connectWallet}>
-            Connect Wallet
+            Conectar carteira.
           </button>
         )}
 
